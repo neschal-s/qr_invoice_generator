@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>TML Invoice QR Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0d0f14;--surface:#161a23;--surface2:#1e2330;
+  --border:#2a2f3d;--border2:#353c50;
+  --accent:#3b82f6;--accent2:#60a5fa;
+  --green:#22c55e;--red:#ef4444;--amber:#f59e0b;--amber2:#fcd34d;
+  --text:#e8eaf0;--muted:#8892a4;--muted2:#5c6478;
+}
+body{font-family:system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:40px 40px;opacity:.2;pointer-events:none;z-index:0}
+.app{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:32px 18px 80px}
+.header{margin-bottom:28px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.header-top{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.logo{width:38px;height:38px;background:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+h1{font-size:20px;font-weight:700}
+.header p{color:var(--muted);font-size:13px;margin-top:3px}
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 11px;border-radius:20px;font-size:11px;font-weight:600;font-family:monospace;border:1px solid var(--border2);color:var(--muted);margin-top:8px}
+.dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:blink 2s infinite;flex-shrink:0}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+.steps{display:flex;align-items:center;margin-bottom:24px;overflow-x:auto;padding-bottom:4px}
+.step{display:flex;align-items:center;gap:6px;flex-shrink:0}
+.snum{width:26px;height:26px;border-radius:50%;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:var(--muted);transition:all .3s}
+.slabel{font-size:12px;color:var(--muted);white-space:nowrap}
+.step.active .snum{background:var(--accent);border-color:var(--accent);color:#fff}
+.step.active .slabel{color:var(--text);font-weight:600}
+.step.done .snum{background:var(--green);border-color:var(--green);color:#fff}
+.step.done .slabel{color:var(--green)}
+.sline{width:22px;height:1px;background:var(--border2);flex-shrink:0;margin:0 2px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:16px}
+.ph{padding:13px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.pt{font-size:14px;font-weight:600}
+.pb{padding:18px}
+.btn{padding:9px 17px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;display:inline-flex;align-items:center;gap:6px}
+.bp{background:var(--accent);color:#fff}.bp:hover{background:var(--accent2)}
+.bp:disabled{background:var(--border2);color:var(--muted2);cursor:not-allowed}
+.bg{background:transparent;border:1px solid var(--border2);color:var(--muted)}.bg:hover{border-color:var(--accent);color:var(--accent)}
+.bgrn{background:var(--green);color:#fff}.bgrn:hover{background:#16a34a}
+.bgrn:disabled{background:var(--border2);color:var(--muted2);cursor:not-allowed}
+.bsm{padding:5px 11px;font-size:12px;border-radius:6px}
+.inp{background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:10px 13px;color:var(--text);font-family:monospace;font-size:13px;outline:none;transition:border-color .2s;width:100%}
+.inp:focus{border-color:var(--accent)}.inp::placeholder{color:var(--muted2)}
+.upload-zone{border:2px dashed var(--border2);border-radius:10px;padding:36px 20px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(59,130,246,.05)}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.upload-zone h3{font-size:15px;font-weight:600;margin-bottom:6px}
+.upload-zone p{font-size:13px;color:var(--muted)}
+.fchip{display:inline-flex;align-items:center;gap:8px;background:var(--surface2);border:1px solid var(--border2);border-radius:20px;padding:5px 13px;font-size:12px;font-family:monospace;margin-top:10px}
+.po-box{background:rgba(245,158,11,.08);border:1.5px solid rgba(245,158,11,.35);border-radius:10px;padding:14px 16px;margin-bottom:16px}
+.po-head{font-size:13px;font-weight:700;color:var(--amber2);margin-bottom:8px}
+.po-lbl{font-size:10px;font-weight:700;color:var(--amber2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;font-family:monospace}
+.po-inp{background:var(--surface2);border:2px solid rgba(245,158,11,.5);border-radius:8px;padding:9px 13px;color:var(--amber2);font-family:monospace;font-size:14px;font-weight:600;outline:none;width:100%;letter-spacing:1px}
+.po-inp:focus{border-color:var(--amber)}.po-inp.ok{border-color:var(--green);color:var(--green)}.po-inp.err{border-color:var(--red);color:var(--red)}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:560px){.fg{grid-template-columns:1fr}}
+.fgrp{display:flex;flex-direction:column;gap:3px}
+.flbl{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.fnum{color:var(--border2);font-size:10px;margin-right:2px}
+.finp{background:var(--surface2);border:1px solid var(--border2);border-radius:6px;padding:7px 10px;color:var(--text);font-family:monospace;font-size:12px;outline:none;width:100%}
+.finp:focus{border-color:var(--accent)}.finp.err{border-color:var(--red)}.finp.ok{border-color:var(--green)}
+.ferr{font-size:10px;color:var(--red);min-height:12px;font-family:monospace}
+.fhint{font-size:10px;color:var(--muted2)}
+.st{display:flex;align-items:center;gap:8px;padding:10px 13px;border-radius:8px;font-size:13px;margin-bottom:12px}
+.si{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.25);color:var(--accent2)}
+.ss{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.25);color:var(--green)}
+.se{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:#f87171}
+.sw{background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.25);color:var(--amber)}
+.spin{animation:spin .7s linear infinite;display:inline-block;font-size:16px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.pbar{width:100%;height:3px;background:var(--surface2);border-radius:2px;overflow:hidden;margin:8px 0}
+.pfill{height:100%;background:var(--accent);border-radius:2px;transition:width .4s}
+.qr-preview{background:#fff;padding:12px;border-radius:10px;display:inline-block;margin-bottom:12px}
+.qr-preview img{display:block}
+.qrstr-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;font-family:monospace;font-size:11px;color:var(--accent2);word-break:break-all;line-height:1.9;margin-bottom:12px}
+footer{text-align:center;margin-top:40px;color:var(--muted2);font-size:11px;font-family:monospace}
+footer span{color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="header">
+  <div class="header-top">
+    <div class="logo">QR</div>
+    <div>
+      <h1>WELDING HOUSE Invoice QR Generator</h1>
+      <p>Upload vendor invoice &rarr; AI extracts 20 fields &rarr; Validates &rarr; Returns original invoice with QR embedded</p>
+    </div>
+  </div>
+  <div class="badge"><span class="dot"></span>TML QR Spec v1.0 &nbsp;&middot;&nbsp; 20 Fields &nbsp;&middot;&nbsp; Python qrcode library &nbsp;&middot;&nbsp; Claude Sonnet</div>
+</div>
+
+<div class="steps">
+  <div class="step active" id="s1"><div class="snum">1</div><div class="slabel">API Key + Upload</div></div>
+  <div class="sline"></div>
+  <div class="step" id="s2"><div class="snum">2</div><div class="slabel">Extracting Fields</div></div>
+  <div class="sline"></div>
+  <div class="step" id="s3"><div class="snum">3</div><div class="slabel">Review &amp; Edit</div></div>
+  <div class="sline"></div>
+  <div class="step" id="s4"><div class="snum">4</div><div class="slabel">Download PDF</div></div>
+</div>
+
+<!-- STEP 1: API KEY + UPLOAD -->
+<div class="panel" id="p1">
+  <div class="ph"><div class="pt">&#128273; API Key &amp; Invoice Upload</div></div>
+  <div class="pb">
+
+    <div style="margin-bottom:16px">
+      <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">OpenRouter API Key</label>
+      <input class="inp" type="password" id="api_key" placeholder="sk-or-v1-..." autocomplete="off"/>
+      <p style="font-size:11px;color:var(--muted2);margin-top:5px">Your key is sent to Claude for this request only — never stored on the server.</p>
+    </div>
+
+    <div class="po-box">
+      <div class="po-head">&#9888;&#65039; Field #2 — TML PO Order Item No. &nbsp;<span style="font-size:10px;font-weight:400;color:var(--amber);background:rgba(245,158,11,.15);padding:2px 7px;border-radius:4px;font-family:monospace">MANUAL ENTRY REQUIRED</span></div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.6">This field is <strong style="color:var(--text)">not on the invoice PDF</strong>. Enter it manually — must match your ASN details exactly.</p>
+      <div class="po-lbl">#2 TML PO Order Item No. (max 4 digits, e.g. 0010)</div>
+      <input class="po-inp" type="text" id="po_item" maxlength="4" placeholder="0010" oninput="validatePOItem()" autocomplete="off"/>
+      <div style="font-size:11px;color:var(--muted);min-height:14px;margin-top:3px;font-family:monospace" id="poi_err"></div>
+    </div>
+
+    <div class="upload-zone" id="dropZone">
+      <input type="file" id="fileInput" accept=".pdf" onchange="onFileSelect(event)"/>
+      <div style="font-size:28px;margin-bottom:8px">&#128209;</div>
+      <h3>Drop your invoice PDF here</h3>
+      <p>Welding House &middot; TML vendor formats &middot; Multi-page OK</p>
+      <div id="fileChip"></div>
+    </div>
+
+    <div style="margin-top:14px;display:flex;justify-content:flex-end">
+      <button class="btn bp" id="extractBtn" onclick="startExtract()" disabled>Extract with AI &rarr;</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 2: EXTRACTING -->
+<div class="panel" id="p2" style="display:none">
+  <div class="ph"><div class="pt">&#129302; Extracting Fields with AI</div></div>
+  <div class="pb">
+    <div class="st si"><span class="spin">&#9881;</span>&nbsp; Sending invoice to Claude Sonnet — extracting 19 fields...</div>
+    <div class="pbar"><div class="pfill" id="progBar" style="width:5%"></div></div>
+    <p style="font-size:12px;color:var(--muted)">Field #2 (PO Order Item No.) already set to: <strong style="color:var(--amber2)" id="poi_reminder">—</strong></p>
+  </div>
+</div>
+
+<!-- STEP 3: REVIEW FIELDS -->
+<div class="panel" id="p3" style="display:none">
+  <div class="ph">
+    <div class="pt">&#9999;&#65039; Review &amp; Edit All 20 Fields</div>
+    <button class="btn bg bsm" onclick="resetToStep1()">&#8592; Start Over</button>
+  </div>
+  <div class="pb">
+    <div id="p3status"></div>
+    <!-- PO Item reminder -->
+    <div style="background:rgba(245,158,11,.06);border:1px solid rgba(245,158,11,.2);border-radius:8px;padding:9px 13px;margin-bottom:14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:12px">
+      <span style="font-family:monospace;color:var(--muted2)">#2</span>
+      <span style="color:var(--muted);font-weight:600">TML PO Order Item No.</span>
+      <span style="font-family:monospace;color:var(--amber2);font-weight:700;font-size:14px" id="poi_display">—</span>
+      <span style="color:var(--muted2);font-size:11px">(manually entered — must match ASN)</span>
+    </div>
+    <div class="fg" id="fieldsGrid"></div>
+    <div style="margin-top:16px;display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn bg" onclick="validateAll()">Validate All</button>
+      <button class="btn bgrn" id="downloadBtn" onclick="downloadPDF()">&#8659;&nbsp; Generate QR &amp; Download PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- STEP 4: DONE -->
+<div class="panel" id="p4" style="display:none">
+  <div class="ph"><div class="pt">&#9989; Done!</div></div>
+  <div class="pb" id="p4body"></div>
+</div>
+
+<footer>TML Invoice QR Generator &nbsp;&middot;&nbsp; 20-field spec per TML QR Code Implementation v1.0 &nbsp;&middot;&nbsp; <span>Python qrcode + PyMuPDF + Claude Sonnet</span></footer>
+</div>
+
+<script>
+// ── STATE ─────────────────────────────────────────────────────────
+var pdfB64 = '';
+var pdfName = '';
+var extractedFields = {};
+var progTimer = null;
+
+// ── FIELD DEFS (mirrors Python) ────────────────────────────────────
+var FD = [
+  {id:'po_number',n:1, label:'TML PO Number',           max:10, hint:"Buyer's Order No, digits only"},
+  {id:'po_item',  n:2, label:'TML PO Order Item No.',   max:4,  hint:'Manual entry, must match ASN', manual:true},
+  {id:'qty',      n:3, label:'Vendor Invoice Part Qty',  max:12, hint:'e.g. 1 or 15, no commas'},
+  {id:'inv_no',   n:4, label:'Vendor GST Invoice No.',   max:16, hint:'No special chars, e.g. WH252600986'},
+  {id:'inv_date', n:5, label:'Vendor Invoice Date',      max:10, hint:'DD.MM.YYYY only'},
+  {id:'gross',    n:6, label:'Invoice Basic/Gross Rate',  max:10, hint:'Rate before discount'},
+  {id:'net',      n:7, label:'Vendor Invoice Net Rate',   max:10, hint:'Same as gross if no discount'},
+  {id:'vcode',    n:8, label:'Vendor Code',               max:10, hint:'e.g. W60120'},
+  {id:'partno',   n:9, label:'Invoice Part Number',       max:14, hint:'e.g. 8851BQ000028'},
+  {id:'cgst',     n:10,label:'Tax Value CGST',            max:10, hint:'0.00 if not applicable'},
+  {id:'sgst',     n:11,label:'Tax Value SGST',            max:10, hint:'0.00 if not applicable'},
+  {id:'igst',     n:12,label:'Tax Value IGST',            max:10, hint:'0.00 if not applicable'},
+  {id:'ugst',     n:13,label:'Tax Value UGST',            max:10, hint:'0.00 if not applicable'},
+  {id:'cgst_r',   n:14,label:'Tax Rate CGST %',           max:6,  hint:'No % sign, e.g. 9.00'},
+  {id:'sgst_r',   n:15,label:'Tax Rate SGST %',           max:6,  hint:'No % sign, e.g. 9.00'},
+  {id:'igst_r',   n:16,label:'Tax Rate IGST %',           max:6,  hint:'0.00 if not applicable'},
+  {id:'ugst_r',   n:17,label:'Tax Rate UGST %',           max:6,  hint:'0.00 if not applicable'},
+  {id:'cess',     n:18,label:'Cess',                      max:6,  hint:'0.00 if not applicable'},
+  {id:'total',    n:19,label:'Total Invoice Value',        max:16, hint:'Grand total incl. taxes'},
+  {id:'hsn',      n:20,label:'HSN / SAC Code',             max:10, hint:'Digits only, e.g. 85258900'}
+];
+
+function escH(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function setStep(a, done){
+  for(var i=1;i<=4;i++){
+    var el=document.getElementById('s'+i);
+    el.className='step'+(i<done?' done':i===a?' active':'');
+  }
+}
+
+function showPanel(n){
+  for(var i=1;i<=4;i++) document.getElementById('p'+i).style.display=(i===n?'':'none');
+}
+
+// ── PO ITEM VALIDATION ────────────────────────────────────────────
+function validatePOItem(){
+  var inp=document.getElementById('po_item');
+  var err=document.getElementById('poi_err');
+  var v=inp.value.trim();
+  if(!v){inp.className='po-inp';err.textContent='';checkReady();return;}
+  if(!/^\d{1,4}$/.test(v)){inp.className='po-inp err';err.textContent='Digits only (e.g. 0010)';}
+  else{inp.className='po-inp ok';err.textContent='\u2713 Valid';}
+  checkReady();
+}
+
+function checkReady(){
+  var poi=document.getElementById('po_item').value.trim();
+  var poOk=poi&&/^\d{1,4}$/.test(poi);
+  document.getElementById('extractBtn').disabled=!(poOk&&pdfB64);
+}
+
+// ── FILE HANDLING ─────────────────────────────────────────────────
+function onFileSelect(e){
+  var f=e.target.files[0];
+  if(!f||!f.name.toLowerCase().endsWith('.pdf')){alert('Please upload a PDF file.');return;}
+  pdfName=f.name;
+  document.getElementById('fileChip').innerHTML=
+    '<div class="fchip">&#128196; '+escH(f.name)+' &nbsp;('+Math.round(f.size/1024)+' KB)</div>';
+  var reader=new FileReader();
+  reader.onload=function(e){
+  pdfB64=e.target.result.split(',')[1];
+  checkReady();};
+  reader.readAsDataURL(f);
+}
+
+var dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',function(e){e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',function(){dz.classList.remove('drag');});
+dz.addEventListener('drop',function(e){
+  e.preventDefault();dz.classList.remove('drag');
+  var f=e.dataTransfer.files[0];
+  if(f){document.getElementById('fileInput').files=e.dataTransfer.files;onFileSelect({target:{files:[f]}});}
+});
+
+// ── STEP 2: EXTRACT ───────────────────────────────────────────────
+async function startExtract(){
+  var apiKey=document.getElementById('api_key').value.trim();
+  if(!apiKey.startsWith('sk-or-')){
+  alert('Enter a valid OpenRouter API key (sk-or-...)');
+  return;}
+  var poi=document.getElementById('po_item').value.trim();
+  if(!poi||!/^\d{1,4}$/.test(poi)){alert('Please enter a valid PO Order Item No.');return;}
+  if(!pdfB64){alert('Please upload a PDF first.');return;}
+
+  document.getElementById('poi_reminder').textContent=poi;
+  showPanel(2);setStep(2,2);
+
+  // Animate progress bar
+  var pv=5;
+  progTimer=setInterval(function(){
+    pv=Math.min(pv+1.5,88);
+    document.getElementById('progBar').style.width=pv+'%';
+  },300);
+
+  try{
+    var formData=new FormData();
+    formData.append('api_key',apiKey);
+    formData.append('pdf',new Blob([Uint8Array.from(atob(pdfB64),c=>c.charCodeAt(0))],{type:'application/pdf'}),pdfName);
+
+    var resp=await fetch('/extract',{method:'POST',body:formData});
+    var data=await resp.json();
+    clearInterval(progTimer);
+    document.getElementById('progBar').style.width='100%';
+
+    if(!resp.ok){
+      showPanel(1);setStep(1,1);
+      let errMsg = data.error;
+      if(typeof errMsg === "object"){
+        errMsg = JSON.stringify(errMsg);
+      }
+      alert('Error: ' + (errMsg || 'Extraction failed'));
+      return;
+    }
+
+    // Merge extracted fields with manual po_item
+    extractedFields=Object.assign({},data.fields,{po_item:poi});
+    pdfB64=data.pdf_b64;
+
+    setTimeout(function(){renderFields(data.errors);showPanel(3);setStep(3,3);},400);
+
+  }catch(e){
+    clearInterval(progTimer);
+    showPanel(1);setStep(1,1);
+    alert('Network error: '+e.message);
+  }
+}
+
+// ── STEP 3: RENDER FIELDS ─────────────────────────────────────────
+function renderFields(serverErrors){
+  serverErrors=serverErrors||{};
+  document.getElementById('poi_display').textContent=extractedFields.po_item||'—';
+
+  var g=document.getElementById('fieldsGrid');
+  g.innerHTML='';
+  for(var i=0;i<FD.length;i++){
+    var f=FD[i];
+    if(f.manual) continue;
+    var val=extractedFields[f.id]||'';
+    var hasErr=serverErrors[f.id];
+    var d=document.createElement('div');
+    d.className='fgrp';
+    d.innerHTML=
+      '<div class="flbl"><span class="fnum">#'+f.n+'</span>'+escH(f.label)+
+      ' <span style="color:var(--muted2);font-weight:400">(max '+f.max+')</span></div>'+
+      '<input class="finp '+(hasErr?'err':'ok')+'" id="fi_'+f.id+'" value="'+escH(val)+
+      '" maxlength="'+f.max+'" oninput="liveValidate(\''+f.id+'\')">'+
+      '<div class="ferr" id="fe_'+f.id+'">'+(hasErr?escH(serverErrors[f.id]):'')+'</div>'+
+      '<div class="fhint">'+escH(f.hint)+'</div>';
+    g.appendChild(d);
+  }
+
+  var errCount=Object.keys(serverErrors).length;
+  var missing=FD.filter(function(f){return !f.manual&&(!extractedFields[f.id]||extractedFields[f.id]==='');}).length;
+
+  if(errCount>0||missing>0){
+    document.getElementById('p3status').innerHTML=
+      '<div class="st sw">&#9888; '+errCount+' field(s) have validation errors and '+missing+' may be missing — review below</div>';
+  }else{
+    document.getElementById('p3status').innerHTML=
+      '<div class="st ss">&#10003; All 19 fields extracted — review and confirm before downloading</div>';
+  }
+}
+
+function liveValidate(id){
+  var inp=document.getElementById('fi_'+id);
+  var err=document.getElementById('fe_'+id);
+  if(!inp) return;
+  var v=inp.value.trim();
+  var f=null; for(var i=0;i<FD.length;i++){if(FD[i].id===id){f=FD[i];break;}}
+  if(!f) return;
+  var r=clientValidate(f,v);
+  inp.className='finp '+(r.ok?'ok':'err');
+  if(err) err.textContent=r.ok?'':r.err;
+}
+
+function clientValidate(f,val){
+  var s=String(val||'');
+  if(!s) return{ok:false,err:'Required'};
+  if(s.indexOf(',')>=0) return{ok:false,err:'No commas allowed'};
+  if(s.length>f.max) return{ok:false,err:'Max '+f.max+' chars'};
+  return{ok:true,err:''};
+}
+
+function validateAll(){
+  var allOk=true;
+  for(var i=0;i<FD.length;i++){
+    var f=FD[i]; if(f.manual) continue;
+    var inp=document.getElementById('fi_'+f.id);
+    var err=document.getElementById('fe_'+f.id);
+    var r=clientValidate(f,inp?inp.value.trim():'');
+    if(inp) inp.className='finp '+(r.ok?'ok':'err');
+    if(err) err.textContent=r.ok?'':r.err;
+    if(!r.ok) allOk=false;
+  }
+  document.getElementById('p3status').innerHTML=allOk
+    ?'<div class="st ss">&#10003; All fields valid — ready to generate QR and download</div>'
+    :'<div class="st se">&#10007; Fix highlighted errors before downloading</div>';
+  return allOk;
+}
+
+// ── STEP 4: DOWNLOAD ──────────────────────────────────────────────
+async function downloadPDF(){
+  if(!validateAll()) return;
+
+  var btn=document.getElementById('downloadBtn');
+  btn.disabled=true;btn.textContent='Generating QR...';
+
+  // Collect current field values
+  var fields={};
+  for(var i=0;i<FD.length;i++){
+    var f=FD[i];
+    if(f.manual){fields[f.id]=document.getElementById('po_item').value.trim();continue;}
+    var inp=document.getElementById('fi_'+f.id);
+    fields[f.id]=inp?inp.value.trim():'';
+  }
+
+  try{
+    var resp=await fetch('/download',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({fields:fields,pdf_b64:pdfB64,pdf_name:pdfName})
+    });
+
+    if(!resp.ok){
+      var err=await resp.json();
+      throw new Error(err.error||'Download failed');
+    }
+
+    // Trigger download
+    var blob=await resp.blob();
+    var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');
+    var base=pdfName.replace(/\.pdf$/i,'');
+    a.href=url; a.download=base+'_TML_QR.pdf';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},5000);
+
+    // Build QR string for display
+    var qrVals=FD.map(function(f){return fields[f.id]||'';});
+    var qrStr=qrVals.join(',');
+
+    showPanel(4);setStep(4,5);
+    document.getElementById('p4body').innerHTML=
+      '<div class="st ss">&#10003; PDF downloaded with TML QR code embedded in the top-right corner of every page. Scan with your phone camera to verify.</div>'+
+      '<div style="margin-top:12px">'+
+        '<div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px;font-family:monospace">QR String Encoded ('+qrStr.length+' chars)</div>'+
+        '<div class="qrstr-box">'+escH(qrStr)+'</div>'+
+      '</div>'+
+      '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+        '<button class="btn bp" onclick="resetToStep1()">Process Another Invoice</button>'+
+        '<button class="btn bg" onclick="showPanel(3);setStep(3,3)">Edit Fields</button>'+
+      '</div>';
+
+  }catch(e){
+    document.getElementById('p3status').innerHTML='<div class="st se">&#10007; Error: '+escH(e.message)+'</div>';
+  }finally{
+    btn.disabled=false;btn.innerHTML='&#8659;&nbsp; Generate QR &amp; Download PDF';
+  }
+}
+
+function resetToStep1(){
+  pdfB64='';pdfName='';extractedFields={};
+  document.getElementById('fileInput').value='';
+  document.getElementById('fileChip').innerHTML='';
+  document.getElementById('po_item').value='';
+  document.getElementById('po_item').className='po-inp';
+  document.getElementById('poi_err').textContent='';
+  document.getElementById('extractBtn').disabled=true;
+  showPanel(1);setStep(1,1);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+</script>
+</body>
+</html>
