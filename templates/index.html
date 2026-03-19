@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>TML Invoice QR Generator</title>
+<title>Welding House Invoice QR Generator</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -93,7 +93,7 @@ footer span{color:var(--accent)}
       <p>Upload vendor invoice &rarr; AI extracts 20 fields &rarr; Validates &rarr; Returns original invoice with QR embedded</p>
     </div>
   </div>
-  <div class="badge"><span class="dot"></span>TML QR Spec v1.0 &nbsp;&middot;&nbsp; 20 Fields &nbsp;&middot;&nbsp; Python qrcode library &nbsp;&middot;&nbsp; Claude Sonnet</div>
+  <div class="badge"><span class="dot"></span>QR Spec v1.0 &nbsp;&middot;&nbsp; 20 Fields &nbsp;&middot;&nbsp; Python qrcode library &nbsp;&middot;&nbsp; API Calling</div>
 </div>
 
 <div class="steps">
@@ -114,7 +114,7 @@ footer span{color:var(--accent)}
     <div style="margin-bottom:16px">
       <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:5px">OpenRouter API Key</label>
       <input class="inp" type="password" id="api_key" placeholder="sk-or-v1-..." autocomplete="off"/>
-      <p style="font-size:11px;color:var(--muted2);margin-top:5px">Your key is sent to Claude for this request only — never stored on the server.</p>
+      <p style="font-size:11px;color:var(--muted2);margin-top:5px">Your key is sent to AI for this request only — never stored on the server.</p>
     </div>
 
     <div class="po-box">
@@ -143,7 +143,7 @@ footer span{color:var(--accent)}
 <div class="panel" id="p2" style="display:none">
   <div class="ph"><div class="pt">&#129302; Extracting Fields with AI</div></div>
   <div class="pb">
-    <div class="st si"><span class="spin">&#9881;</span>&nbsp; Sending invoice to Claude Sonnet — extracting 19 fields...</div>
+    <div class="st si"><span class="spin">&#9881;</span>&nbsp; Sending invoice to OpenRouter AI — extracting 19 fields...</div>
     <div class="pbar"><div class="pfill" id="progBar" style="width:5%"></div></div>
     <p style="font-size:12px;color:var(--muted)">Field #2 (PO Order Item No.) already set to: <strong style="color:var(--amber2)" id="poi_reminder">—</strong></p>
   </div>
@@ -178,7 +178,7 @@ footer span{color:var(--accent)}
   <div class="pb" id="p4body"></div>
 </div>
 
-<footer>TML Invoice QR Generator &nbsp;&middot;&nbsp; 20-field spec per TML QR Code Implementation v1.0 &nbsp;&middot;&nbsp; <span>Python qrcode + PyMuPDF + Claude Sonnet</span></footer>
+<footer>WELDING HOUSE Invoice QR Generator &nbsp;&middot;&nbsp; 20-field spec per QR Code Implementation v1.0 &nbsp;&middot;&nbsp; <span>Python qrcode + PyMuPDF + OpenRouter AI</span></footer>
 </div>
 
 <script>
