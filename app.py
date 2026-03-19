@@ -151,9 +151,33 @@ def download():
     pdf_bytes = base64.b64decode(pdf_b64)
     doc = fitz.open(stream=pdf_bytes, filetype="pdf")
 
+    # for page in doc:
+    #     rect = fitz.Rect(page.rect.width - 80, 50, page.rect.width - 10, 120)
+    #     page.insert_image(rect, stream=buf.getvalue())
+
+
     for page in doc:
-        rect = fitz.Rect(page.rect.width - 80, 10, page.rect.width - 10, 80)
+        text_instances = page.search_for("VENDOR CODE")
+
+        if text_instances:
+            inst = text_instances[0]  # first match
+
+            qr_size = 70
+            margin = 70
+
+            # Place QR to the RIGHT of "VENDOR CODE"
+            rect = fitz.Rect(
+                inst.x1 + margin,          # right side of text
+                inst.y0 - 10,              # slightly above alignment
+                inst.x1 + margin + qr_size,
+                inst.y0 - 10 + qr_size
+            )
+        else:
+            # fallback (if text not found)
+            rect = fitz.Rect(page.rect.width - 80, 100, page.rect.width - 10, 170)
+
         page.insert_image(rect, stream=buf.getvalue())
+
 
     out = io.BytesIO()
     doc.save(out)
